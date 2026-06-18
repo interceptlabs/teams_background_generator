@@ -92,7 +92,11 @@
   <div class="panel">
     <div class="phead">
       <div class="ptitle">Teams background generator</div>
-      <div class="pinfo">Fritz-triangle keyline art for Teams call backgrounds. <b>Randomize axis</b> for a fresh composition, <b>drag the canvas</b> to orbit it in 3D, tweak the sliders &amp; colours, then <b>Save Teams background</b> (4K PNG, logo baked in) → set it as your background in Teams.</div>
+      <div class="pinfo">Fritz-triangle keyline art for Teams call backgrounds. <b>Randomize</b> for a fresh composition, <b>drag the canvas</b> to orbit it in 3D, tweak the sliders &amp; colours, then <b>Save 4K</b> (logo baked in) → set it as your background in Teams.</div>
+    </div>
+    <div class="acts" style="margin:12px 0 4px">
+      <button id="rand">Randomize</button>
+      <button id="teams">⬇ Save 4K</button>
     </div>
     <div class="sec">Spiral</div>
     <div class="row"><label>Spiral openness <b id="vOpen">5.0</b></label><input type="range" id="open" min="0" max="60" step="0.5" value="5"></div>
@@ -119,24 +123,11 @@
     <div class="row" style="margin-top:11px"><label>String spread <b id="vSpread">1.6</b></label><input type="range" id="spread" min="0" max="6.28" step="0.05" value="1.6"></div>
 
     <div class="acts" style="margin-top:14px">
-      <button id="rand">Randomize axis</button>
-      <button id="lean">Flip lean</button>
+      <button id="lean" class="wide">Flip lean</button>
     </div>
 
     <div class="sec">Locked</div>
-    <div class="note" style="margin:0;line-height:1.7">Iterations 3040 · Gap 1.6px<br>Weight 0.7 · Opacity 0.24 · Size 224→129</div>
-
-    <div class="sec">Export</div>
-    <div class="row"><label>Teams background <b id="vRes">3840×2160</b></label>
-      <select id="res" style="width:100%;background:rgba(255,255,255,.05);color:var(--ink);border:1px solid var(--hair);border-radius:7px;padding:6px;font-family:inherit;font-size:11px;outline:none;">
-        <option value="1920x1080">1920×1080 — 1080p</option>
-        <option value="2560x1440">2560×1440 — 1440p</option>
-        <option value="3840x2160" selected>3840×2160 — 4K (recommended)</option>
-      </select>
-    </div>
-    <div class="acts" style="margin-top:6px">
-      <button id="teams" class="wide">⬇ Save Teams background (PNG)</button>
-    </div>
+    <div class="note" style="margin:0;line-height:1.7">Iterations 3040 · Gap 1.6px · Export 4K<br>Weight 0.7 · Opacity 0.24 · Size 224→129</div>
   </div>
 
 <script>
@@ -403,9 +394,7 @@
   });
   cv.addEventListener('pointerup',()=>{ drag=null; cv.style.cursor='grab'; });
   el('lean').addEventListener('click',()=>{LEAN*=-1;render();});
-  let RES=[3840,2160];
-  el('res').addEventListener('change',e=>{const [w,h]=e.target.value.split('x').map(Number);RES=[w,h];el('vRes').textContent=`${w}×${h}`;});
-  el('teams').addEventListener('click',()=>exportTeams(RES[0],RES[1]));
+  el('teams').addEventListener('click',()=>exportTeams(3840,2160));   // 4K only
 
   window.addEventListener('resize',resize);
   renderStrings(); resize(); doRandom();
