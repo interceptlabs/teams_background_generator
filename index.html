@@ -92,11 +92,11 @@
   <div class="panel">
     <div class="phead">
       <div class="ptitle">Teams background generator</div>
-      <div class="pinfo">Fritz-triangle keyline art for Teams call backgrounds. <b>Randomize</b> for a fresh composition, <b>drag the canvas</b> to orbit it in 3D, tweak the sliders &amp; colours, then <b>Save 4K</b> (logo baked in) → set it as your background in Teams.</div>
+      <div class="pinfo">Fritz-triangle keyline art for Teams call backgrounds. <b>Randomize</b> for a fresh composition, <b>drag the canvas</b> to orbit it in 3D, tweak the sliders &amp; colours, then <b>Download</b> (4K, logo baked in) → set it as your background in Teams.</div>
     </div>
     <div class="acts" style="margin:12px 0 4px">
       <button id="rand">Randomize</button>
-      <button id="teams">⬇ Save 4K</button>
+      <button id="teams">⬇ Download</button>
     </div>
     <div class="sec">Spiral</div>
     <div class="row"><label>Spiral openness <b id="vOpen">5.0</b></label><input type="range" id="open" min="0" max="60" step="0.5" value="5"></div>
@@ -318,9 +318,10 @@
     },'image/png');
     // bake the canonical lockup into the top-left, scaled proportionally to the frame
     const sym=document.getElementById('intercept-lockup');
-    const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -9 324.005 76.2147" width="324.005" height="76.2147" overflow="visible">${sym.innerHTML}</svg>`;
+    const ss=4;  // rasterize the lockup at 4× its placed size, then downscale → crisp at 4K (no upscale crunch)
+    const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -9 324.005 76.2147" width="${Math.round(lw*ss)}" height="${Math.round(lh*ss)}" overflow="visible">${sym.innerHTML}</svg>`;
     const img=new Image();
-    img.onload=()=>{ c.drawImage(img,m,m,lw,lh); save(); };
+    img.onload=()=>{ c.imageSmoothingEnabled=true; c.imageSmoothingQuality='high'; c.drawImage(img,m,m,lw,lh); save(); };
     img.onerror=save;
     img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
   }
