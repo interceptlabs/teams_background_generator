@@ -327,7 +327,7 @@
 
   // per-string slider spec: [key, label, min, max, step, formatter]
   const SVARS=[
-    ['op','Opacity',0.05,0.35,0.01,v=>(+v).toFixed(2)],
+    ['op','Opacity',0.05,1,0.01,v=>(+v).toFixed(2)],
     ['open','Openness',0,60,0.5,v=>(+v).toFixed(1)],
     ['r0','Start radius',0,300,2,v=>Math.round(v)],
     ['spin','Spin',0,4,0.05,v=>(+v).toFixed(2)],
@@ -400,7 +400,7 @@
     setCtrl('focal','vFocal',  Math.round(rnd(1200,1900)/50)*50);
     // per-string variables — each ribbon rolls its own within curated bands
     STRINGS.forEach(s=>{
-      s.op    = +rnd(0.15,0.35).toFixed(2);
+      s.op    = +rnd(0.18,0.5).toFixed(2);
       s.open  = +rnd(10,40).toFixed(1);                    // spread the rings apart
       s.r0    = Math.round(rnd(20,200));
       s.spin  = +rnd(0.12,0.5).toFixed(2);                 // gentler → less twisty
