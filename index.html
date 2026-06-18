@@ -39,11 +39,15 @@
   .seg button{flex:1;padding:6px 0;font-size:11px;border:1px solid var(--hair);background:transparent;color:var(--ink-dim);border-radius:8px;cursor:pointer;font-family:inherit;transition:.12s;}
   .seg button.on{color:var(--ink);border-color:rgba(255,255,255,.35);background:rgba(255,255,255,.06);}
   .seg button:hover{color:var(--ink);}
-  .string{display:flex;align-items:center;gap:7px;margin-bottom:7px;}
-  .sw{width:30px;height:18px;border-radius:4px;flex:0 0 auto;border:1px solid rgba(255,255,255,.18);}
-  .string select{flex:1;background:rgba(255,255,255,.05);color:var(--ink);border:1px solid var(--hair);border-radius:7px;padding:5px 6px;font-family:inherit;font-size:11px;outline:none;}
-  .string .rm{flex:0 0 auto;width:22px;height:24px;border:1px solid var(--hair);background:transparent;color:var(--ink-dim);border-radius:6px;cursor:pointer;font-size:13px;line-height:1;}
+  .string{border:1px solid var(--hair);border-radius:8px;padding:8px;margin-bottom:8px;}
+  .string-head{display:flex;align-items:center;gap:7px;}
+  .sw{width:28px;height:18px;border-radius:4px;flex:0 0 auto;border:1px solid rgba(255,255,255,.18);}
+  .string-head select{flex:1;background:rgba(255,255,255,.05);color:var(--ink);border:1px solid var(--hair);border-radius:7px;padding:5px 6px;font-family:inherit;font-size:11px;outline:none;}
+  .string .rm{flex:0 0 auto;width:22px;height:24px;border:1px solid var(--hair);background:transparent;color:var(--ink-dim);border-radius:6px;cursor:pointer;font-size:12px;line-height:1;}
   .string .rm:hover{color:var(--ink);}
+  .srow{margin-top:8px;}
+  .srow label{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;color:var(--ink-dim);font-size:11px;}
+  .srow label b{color:var(--ink);font-weight:500;font-family:'Geist Mono',ui-monospace,monospace;font-size:10.5px;}
   .add{width:100%;padding:7px 0;font-size:11px;border:1px dashed rgba(255,255,255,.22);background:transparent;color:var(--ink-dim);border-radius:8px;cursor:pointer;font-family:inherit;margin-top:3px;letter-spacing:.04em;}
   .add:hover{color:var(--ink);border-color:rgba(255,255,255,.4);}
   .acts{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:14px;}
@@ -98,12 +102,6 @@
       <button id="rand">Randomize</button>
       <button id="teams">⬇ Download</button>
     </div>
-    <div class="sec">Spiral</div>
-    <div class="row"><label>Spiral openness <b id="vOpen">5.0</b></label><input type="range" id="open" min="0" max="60" step="0.5" value="5"></div>
-    <div class="row"><label>Start radius <b id="vR0">26</b></label><input type="range" id="r0" min="0" max="300" step="2" value="26"></div>
-    <div class="row"><label>Triangle spin <b id="vSpin">0.45</b></label><input type="range" id="spin" min="0" max="4" step="0.05" value="0.45"></div>
-    <div class="row"><label>Spiral tilt <b id="vPtilt">0°</b></label><input type="range" id="ptilt" min="-80" max="80" step="1" value="0"></div>
-
     <div class="sec">Axis wander</div>
     <div class="note">pivot follows a 3D Bézier loop</div>
     <div class="row"><label>Wander amount <b id="vWan">340</b></label><input type="range" id="wan" min="340" max="500" step="5" value="340"></div>
@@ -127,7 +125,7 @@
     </div>
 
     <div class="sec">Locked</div>
-    <div class="note" style="margin:0;line-height:1.7">Iterations 3040 · Gap 1.6px · Export 4K<br>Weight 0.7 · Opacity 0.24 · Size 224→129</div>
+    <div class="note" style="margin:0;line-height:1.7">Iterations 3040 · Gap 1.6px<br>Size 224→129 · Export 4K</div>
   </div>
 
 <script>
@@ -163,12 +161,13 @@
 
   const el = id => document.getElementById(id);
   const P = {
-    steps:3040, gap:1.6, open:5, r0:26, spin:0.45,        // steps/gap locked
-    wan:340, wt:2.3, s0:224, s1:129, weight:0.7, op:0.24, spread:1.6,  // s0/s1/weight/op locked
-    ptilt:0,                                  // spiral-plane tilt (object lives in 3D)
-    rx:0, ry:0, rz:0, depth:0, focal:1500,   // 3D viewpoint
+    steps:3040, gap:1.6, s0:224, s1:129,      // locked: iterations / gap / size
+    wan:340, wt:2.3, spread:1.6,              // shared circuit
+    rx:0, ry:0, rz:0, depth:0, focal:1500,    // 3D viewpoint (shared)
     bg:'halo', phX:0.0, phY:1.57, seedY:1.3
   };
+  // per-string variables (each string is its own ribbon): colour, opacity, openness, start radius, spin, tilt, weight
+  function newString(mode){ return {mode, op:0.32, open:9, r0:60, spin:0.45, ptilt:0, weight:0.7}; }
   // Logo keep-out zone (on-screen, composition px): an elliptical clearing the drawing never enters.
   const LOGO_W=37.5*324.005/76.2147, LOGO_CX=28+LOGO_W/2, LOGO_CY=28+37.5/2;
   const ZRX=115, ZRY=66;            // zone radii (ratios reused for the export frame)
@@ -180,7 +179,7 @@
     };
   }
   const MASK_SCREEN=ellipseMask(LOGO_CX,LOGO_CY,ZRX,ZRY), XF_SCREEN={s:1,ox:0,oy:0};
-  let STRINGS = [ {mode:'flarepop'}, {mode:'coolsweep'} ];
+  let STRINGS = [ newString('flarepop'), newString('coolsweep') ];
 
   function resize(){
     DPR = Math.min(window.devicePixelRatio||1, 2);
@@ -223,15 +222,15 @@
   function buildOps(w,h){
     const ops=[];
     const n=Math.max(1,P.steps);
-    const b=P.open;
     STRINGS.forEach((s,k)=>{
       const stops=MODES[s.mode].stops;
+      const b=s.open;               // per-string spiral openness
       const uOff=k*0.17;            // strings ride the loop at different phases
       const theta0=k*P.spread;
-      // spiral plane tilted into 3D so the disk isn't screen-parallel
-      const tX=P.ptilt*Math.PI/180, tY=P.ptilt*0.6*Math.PI/180;
+      // per-string spiral-plane tilt into 3D
+      const tX=s.ptilt*Math.PI/180, tY=s.ptilt*0.6*Math.PI/180;
       const cX=Math.cos(tX), sX=Math.sin(tX), cY=Math.cos(tY), sY=Math.sin(tY);
-      let theta=theta0, r=P.r0;
+      let theta=theta0, r=s.r0;
       for(let i=0;i<n;i++){
         const t=i/n;
         const u=((t*P.wt)+uOff)%1;  // traverse the 3D Bézier loop P.wt times
@@ -244,10 +243,10 @@
         const lx3=lx*cY + lz1*sY, lz3=-lx*sY + lz1*cY;       // tilt about Y
         const x=ax + lx3;
         const y=ay + ly2;
-        const ang=theta*P.spin;
+        const ang=theta*s.spin;
         const size=P.s0+(P.s1-P.s0)*t;
         const [cr,cg,cb]=colorAt(stops,t);
-        ops.push({x,y,z:az+lz3,ang,size,r:cr,g:cg,b:cb});
+        ops.push({x,y,z:az+lz3,ang,size,r:cr,g:cg,b:cb,wt:s.weight,op:s.op});
         // advance one stroke-gap of arc length, grow radius (Archimedean r = r0 + b·Δθ)
         const dtheta = P.gap / Math.sqrt(r*r + b*b + 1e-6);
         theta += dtheta;
@@ -288,8 +287,8 @@
       j ? c.lineTo(p[0],p[1]) : c.moveTo(p[0],p[1]);
     }
     c.closePath();
-    c.strokeStyle=`rgba(${o.r},${o.g},${o.b},${P.op})`;
-    c.lineWidth=P.weight; c.lineJoin='round'; c.stroke();
+    c.strokeStyle=`rgba(${o.r},${o.g},${o.b},${o.op})`;
+    c.lineWidth=o.wt; c.lineJoin='round'; c.stroke();
   }
 
   let OPS=null, V=null;
@@ -326,22 +325,45 @@
     img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
   }
 
+  // per-string slider spec: [key, label, min, max, step, formatter]
+  const SVARS=[
+    ['op','Opacity',0.05,1,0.01,v=>(+v).toFixed(2)],
+    ['open','Openness',0,60,0.5,v=>(+v).toFixed(1)],
+    ['r0','Start radius',0,300,2,v=>Math.round(v)],
+    ['spin','Spin',0,4,0.05,v=>(+v).toFixed(2)],
+    ['ptilt','Tilt',-80,80,1,v=>Math.round(v)+'°'],
+    ['weight','Weight',0.25,3,0.05,v=>(+v).toFixed(2)],
+  ];
   function renderStrings(){
     const wrap=el('strings'); wrap.innerHTML='';
     STRINGS.forEach((s,k)=>{
-      const row=document.createElement('div'); row.className='string';
+      const card=document.createElement('div'); card.className='string';
+      const head=document.createElement('div'); head.className='string-head';
       const sw=document.createElement('div'); sw.className='sw';
       const stops=MODES[s.mode].stops;
       sw.style.background = stops.length===1 ? stops[0] : `linear-gradient(90deg, ${stops.join(',')})`;
       const sel=document.createElement('select');
       MODE_KEYS.forEach(mk=>{const o=document.createElement('option');o.value=mk;o.textContent=MODES[mk].label;if(mk===s.mode)o.selected=true;sel.appendChild(o);});
       sel.addEventListener('change',()=>{s.mode=sel.value;renderStrings();render();});
+      const caret=document.createElement('button'); caret.className='rm'; caret.textContent=s._open?'▾':'▸';
+      caret.addEventListener('click',()=>{s._open=!s._open;renderStrings();});
       const rm=document.createElement('button'); rm.className='rm'; rm.textContent='×';
       rm.addEventListener('click',()=>{if(STRINGS.length>1){STRINGS.splice(k,1);renderStrings();render();}});
-      row.append(sw,sel,rm); wrap.appendChild(row);
+      head.append(sw,sel,caret,rm); card.appendChild(head);
+      // sliders: opacity always shown; the rest behind the caret
+      SVARS.forEach(([key,lab,mn,mx,st,fmt])=>{
+        if(key!=='op' && !s._open) return;
+        const row=document.createElement('div'); row.className='srow';
+        const l=document.createElement('label'); const b=document.createElement('b'); b.textContent=fmt(s[key]);
+        l.textContent=lab+' '; l.appendChild(b);
+        const inp=document.createElement('input'); inp.type='range'; inp.min=mn; inp.max=mx; inp.step=st; inp.value=s[key];
+        inp.addEventListener('input',()=>{ s[key]=+inp.value; b.textContent=fmt(inp.value); render(); });
+        row.append(l,inp); card.appendChild(row);
+      });
+      wrap.appendChild(card);
     });
   }
-  el('add').addEventListener('click',()=>{STRINGS.push({mode:MODE_KEYS[STRINGS.length%MODE_KEYS.length]});renderStrings();render();});
+  el('add').addEventListener('click',()=>{STRINGS.push(newString(MODE_KEYS[STRINGS.length%MODE_KEYS.length]));renderStrings();render();});
 
   const FMT = {
     vSteps:v=>`${v}`, vGap:v=>`${(+v).toFixed(1)}px`, vOpen:v=>`${(+v).toFixed(1)}`,
@@ -353,8 +375,7 @@
   };
   // [sliderId, P-key, valueLabelId, viewpoint-only?]  (viewpoint-only changes skip the ops rebuild)
   const CTRL = [
-    ['open','open','vOpen',false],['ptilt','ptilt','vPtilt',false],
-    ['r0','r0','vR0',false],['spin','spin','vSpin',false],['wan','wan','vWan',false],
+    ['wan','wan','vWan',false],
     ['wt','wt','vWt',false],['rx','rx','vRx',true],['ry','ry','vRy',true],['rz','rz','vRz',true],
     ['depth','depth','vDepth',false],['focal','focal','vFocal',true],
     ['spread','spread','vSpread',false]
@@ -368,18 +389,25 @@
 
   // Randomize within curated "always good" bounds (the design parameters), so every roll lands usable.
   function doRandom(){
-    ANCHORS=genAnchors();                                  // new 3D Bézier path shape
-    setCtrl('open','vOpen',   +rnd(14,40).toFixed(1));     // spread the rings apart
-    setCtrl('r0','vR0',        Math.round(rnd(20,200)));
-    setCtrl('spin','vSpin',   +rnd(0.12,0.45).toFixed(2)); // gentler → less twisty
+    ANCHORS=genAnchors();                                  // new 3D Bézier path shape (shared circuit)
+    // shared globals
     setCtrl('wan','vWan',      Math.round(rnd(340,460)/5)*5);
     setCtrl('wt','vWt',       +rnd(0.6,1.8).toFixed(1));   // fewer loop traversals → less dense
-    setCtrl('ptilt','vPtilt',  Math.round((Math.random()<0.5?-1:1)*rnd(28,64))); // spiral tips into 3D
     setCtrl('rx','vRx',        Math.round(rnd(-42,42)));   // 3D viewpoint
     setCtrl('ry','vRy',        Math.round(rnd(-42,42)));
     setCtrl('rz','vRz',        Math.round(rnd(-12,12)));
     setCtrl('depth','vDepth',  Math.round(rnd(420,1050)/10)*10);  // travel through depth
     setCtrl('focal','vFocal',  Math.round(rnd(1200,1900)/50)*50);
+    // per-string variables — each ribbon rolls its own within curated bands
+    STRINGS.forEach(s=>{
+      s.op    = +rnd(0.18,0.5).toFixed(2);
+      s.open  = +rnd(10,40).toFixed(1);                    // spread the rings apart
+      s.r0    = Math.round(rnd(20,200));
+      s.spin  = +rnd(0.12,0.5).toFixed(2);                 // gentler → less twisty
+      s.ptilt = Math.round((Math.random()<0.5?-1:1)*rnd(24,64)); // tips into 3D
+      s.weight= +rnd(0.55,0.9).toFixed(2);
+    });
+    renderStrings();
     render();
   }
   el('rand').addEventListener('click',doRandom);
